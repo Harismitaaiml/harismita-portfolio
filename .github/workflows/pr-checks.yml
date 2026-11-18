@@ -1,0 +1,20 @@
+name: Pull Request Checks
+on:
+  pull_request:
+    branches: [main, develop]
+jobs:
+  basic-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required files
+        run: |
+          test -f index.html
+          test -f css/theme.css
+          test -f css/style.css
+          test -f js/main.js
+      - name: Check required section IDs
+        run: |
+          for section in hero journey interests family hobbies footer; do
+            grep -q "id=\"$section\"" index.html || exit 1
+          done
