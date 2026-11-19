@@ -117,3 +117,84 @@ noteButton.addEventListener("click", () => {
 
 // Footer year.
 document.getElementById("year").textContent = new Date().getFullYear();
+
+// Accessible family flip cards: works with mouse, touch, Enter and Space.
+document.querySelectorAll('.family-person').forEach(card => {
+  card.addEventListener('click', () => {
+    const flipped = card.classList.toggle('is-flipped');
+    card.setAttribute('aria-pressed', String(flipped));
+  });
+});
+
+// Native dialog lightbox for hobby photographs (no external library).
+const hobbyLightbox = document.getElementById('hobbyLightbox');
+const lightboxImage = document.getElementById('lightboxImage');
+const lightboxTitle = document.getElementById('lightboxTitle');
+const lightboxCategory = document.getElementById('lightboxCategory');
+const lightboxDescription = document.getElementById('lightboxDescription');
+document.querySelectorAll('.hobby-card').forEach(card => {
+  const photo = card.querySelector('.hobby-photo');
+  if (!photo) return;
+  photo.tabIndex = 0;
+  photo.setAttribute('role', 'button');
+  photo.setAttribute('aria-haspopup', 'dialog');
+  photo.setAttribute('aria-label', `Enlarge ${card.querySelector('h3').textContent} photograph`);
+  const openLightbox = () => {
+    lightboxImage.src = photo.currentSrc || photo.src;
+    lightboxImage.alt = photo.alt;
+    lightboxTitle.textContent = card.querySelector('h3').textContent;
+    lightboxCategory.textContent = card.querySelector('.hobby-info > span').textContent;
+    lightboxDescription.textContent = card.querySelector('.hobby-info p').textContent;
+    hobbyLightbox.showModal();
+  };
+  photo.addEventListener('click', openLightbox);
+  photo.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openLightbox();
+    }
+  });
+});
+document.getElementById('lightboxClose').addEventListener('click', () => hobbyLightbox.close());
+hobbyLightbox.addEventListener('click', event => {
+  if (event.target === hobbyLightbox) hobbyLightbox.close();
+});
+hobbyLightbox.addEventListener('close', () => { lightboxImage.src = ''; });
+
+// Keep navigation state in sync with the section currently in view.
+const navLinks = [...document.querySelectorAll('.main-nav a')];
+const navObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    navLinks.forEach(link => {
+      if (link.getAttribute('href') === `#${entry.target.id}`) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+  });
+}, { rootMargin: '-35% 0px -55% 0px' });
+document.querySelectorAll('main section[id]').forEach(section => navObserver.observe(section));
+
+// Ensure the theme toggle is announced clearly to assistive technology.
+themeToggle.setAttribute('aria-label', 'Change colour theme. Current theme: ' + document.documentElement.dataset.theme);
+// Update accessible label whenever the theme changes.
+themeToggle.addEventListener('click', () => {
+  window.setTimeout(() => themeToggle.setAttribute('aria-label', 'Change colour theme. Current theme: ' + document.documentElement.dataset.theme), 0);
+});
+
+// Timeline description disclosure: keeps longer milestones compact by default.
+document.querySelectorAll('.timeline-card > div > p').forEach(description => {
+  if (description.textContent.trim().length < 105) return;
+  description.classList.add('timeline-description-collapsed');
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'timeline-more';
+  toggle.textContent = 'READ MORE +';
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!expanded));
+    description.classList.toggle('is-expanded', !expanded);
+    toggle.textContent = expanded ? 'READ MORE +' : 'SHOW LESS −';
+  });
+  description.insertAdjacentElement('afterend', toggle);
+});

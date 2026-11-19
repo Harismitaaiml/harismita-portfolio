@@ -3,7 +3,7 @@ name: Validate HTML & CSS
 on:
   push:
   pull_request:
-  workflow_dispatch:
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -11,7 +11,6 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,11 +21,10 @@ jobs:
           node-version: '24'
 
       - name: Install validation tools
-        run: |
-          npm install --global htmlhint csslint
+        run: npm install --global htmlhint stylelint
 
       - name: Validate HTML
         run: htmlhint "*.html" --config .htmlhintrc
 
       - name: Validate CSS
-        run: csslint css/*.css --quiet
+        run: stylelint "css/*.css" --config .stylelintrc.json
