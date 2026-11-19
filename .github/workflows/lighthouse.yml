@@ -1,21 +1,30 @@
-name: Lighthouse Audit
+name: Lighthouse Performance Audit
 on:
+  workflow_run:
+    workflows: [Deploy to GitHub Pages]
+    types: [completed]
+  schedule:
+    - cron: '0 9 * * 1'
   workflow_dispatch:
-  pull_request:
-    branches: [main, develop]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  lighthouse:
+  audit:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Run Lighthouse against GitHub Pages
+        uses: treosh/lighthouse-ci-action@v12
         with:
-          node-version: 20
-      - name: Run Lighthouse CI
-        run: |
-          npm install -g @lhci/cli
-          python3 -m http.server 8080 > /tmp/portfolio-server.log 2>&1 &
-          SERVER_PID=$!
-          sleep 3
-          lhci autorun --collect.url=http://localhost:8080 --collect.numberOfRuns=1 --upload.target=temporary-public-storage
-          kill $SERVER_PID
+          urls: |
+            https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+      - name: Upload Lighthouse report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: '.lighthouseci/'
+          retention-days: 30

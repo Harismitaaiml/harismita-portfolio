@@ -1,14 +1,36 @@
-name: Workflow Notification
+name: Deployment Notifications
 on:
   workflow_run:
-    workflows: ["Validate HTML", "Pull Request Checks", "Lighthouse Audit"]
+    workflows: [Deploy to GitHub Pages]
     types: [completed]
+permissions:
+  contents: read
 jobs:
-  report:
+  notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Report workflow result
+      - name: Report successful deployment
+        if: github.event.workflow_run.conclusion == 'success'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: |
-          echo "Workflow: ${{ github.event.workflow_run.name }}"
-          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
-          echo "Run URL: ${{ github.event.workflow_run.html_url }}"
+          echo "Deployment successful: ${SITE_URL}"
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl --fail --silent --show-error -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"Portfolio deployed successfully: ${SITE_URL}\"}" \
+              "$SLACK_WEBHOOK_URL"
+          else
+            echo 'SLACK_WEBHOOK_URL is not configured; skipping external notification.'
+          fi
+      - name: Report failed deployment
+        if: github.event.workflow_run.conclusion == 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          echo 'Deployment failed. Review the Deploy to GitHub Pages workflow run.'
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl --fail --silent --show-error -X POST -H 'Content-type: application/json' \
+              --data '{"text":"Portfolio deployment failed. Check the GitHub Actions run."}' \
+              "$SLACK_WEBHOOK_URL"
+          fi

@@ -36,3 +36,32 @@ No frontend framework, CSS framework, jQuery, TypeScript, npm package or build s
 
 ## Assessment CI workflows
 The workflow files in `.github/workflows/` are starter checks for validation, pull requests, deployment, Lighthouse and notifications. Review the deployment and notification secrets/targets before enabling those workflows in a real repository. GitHub Pages deployment requires Pages to be enabled and the repository permission configuration to allow deployment.
+
+## Design system: edit once, update everywhere
+
+The visual design tokens live in **`css/theme.css` only**. This file is the source of truth for brand colours, surfaces, text colours, decorative palette, typography, spacing scale, layout widths, radii, shadows and motion timing. `css/style.css` consumes those values with `var(--token-name)`; avoid adding new literal colours or font stacks to component rules.
+
+To change the site's shared look, edit the relevant token in `css/theme.css`. The `data-theme` variants (`light`, `dark`, `warm`) override the same token names, so components update together without editing every selector. The theme switch is implemented in vanilla JavaScript and remembers the selected theme in local storage.
+
+## Interactions
+
+- Responsive navigation with a vanilla-JS mobile menu.
+- Three theme modes (light, dark and warm).
+- Scroll reveal and section progress indicators.
+- Family cards flip on click/tap and keyboard activation.
+- Hobby photographs open in an accessible native `<dialog>` lightbox.
+- Project cards open native dialog case studies.
+- Footer year is generated automatically.
+
+## GitHub Actions
+
+Five workflows are included under `.github/workflows/`: HTML/CSS validation, GitHub Pages deployment, PR quality checks, Lighthouse auditing and deployment notifications. Add a repository Actions secret named `SLACK_WEBHOOK_URL` to enable Slack notifications; without it, the workflow reports the result in its logs and skips the external message.
+
+## Personal assets to add before submission
+
+Add an approved family group photograph to `images/family/` and update the family banner to use it if you are comfortable sharing it. The current banner is an abstract visual, not a real family photograph. Replace the generic GitHub profile destination in the footer with your own GitHub profile URL. The five interest descriptions are intentionally broad; personalise them with your actual favourite artists, titles, dishes, books and destinations before final submission.
+
+## Code validation
+- HTML is checked with HTMLHint using `.htmlhintrc`.
+- CSS is checked with Stylelint using `.stylelintrc.json`.
+- The GitHub Actions validation workflow runs on pushes and pull requests.

@@ -1,16 +1,30 @@
-name: Validate HTML
+name: Validate HTML & CSS
+
 on:
   push:
-    branches: [main, develop]
   pull_request:
     branches: [main, develop]
+
+permissions:
+  contents: read
+
 jobs:
-  html-validation:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Validate HTML with Nu HTML Checker
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          root: .
-          css: false
+          node-version: '24'
+
+      - name: Install validation tools
+        run: npm install --global htmlhint stylelint
+
+      - name: Validate HTML
+        run: htmlhint "*.html" --config .htmlhintrc
+
+      - name: Validate CSS
+        run: stylelint "css/*.css" --config .stylelintrc.json
